@@ -17,11 +17,12 @@ impl HandshakeResponse {
 pub fn perform_handshake() -> HandshakeResponse {
     HandshakeResponse {
         status: 101,
-        reason: "Switching Protocols",
+        reason: "SWITCHING_PROTOCOLS",
         headers: vec![
-            ("Connection".to_string(), "Upgrade".to_string()),
-            ("Upgrade".to_string(), "GURT/1.0".to_string()),
+            ("gurt-version".to_string(), "1.0.0".to_string()),
+            ("encryption".to_string(), "TLS/1.3".to_string()),
+            ("alpn".to_string(), "GURT/1.0".to_string()),
+            ("server".to_string(), "GURT/1.0.0".to_string()),
         ],
     }
 }
-

@@ -1,3 +1,2 @@
 [workspace]
-members = ["gurt-api"]
-
+members = ["gurt-api", "gurtd"]
