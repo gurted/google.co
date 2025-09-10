@@ -42,4 +42,13 @@ pub trait IndexEngine: Send + Sync {
 }
 
 pub mod tantivy;
+pub mod noop;
 
+/// Select an engine implementation by name.
+pub fn make_engine(name: &str) -> anyhow::Result<Box<dyn IndexEngine>> {
+    match name {
+        "tantivy" => Ok(Box::new(tantivy::TantivyIndexEngine::with_default_schema())),
+        "noop" => Ok(Box::new(noop::NoopIndexEngine::default())),
+        other => Err(anyhow::anyhow!(format!("unknown engine: {}", other))),
+    }
+}
