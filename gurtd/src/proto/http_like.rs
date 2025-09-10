@@ -1,6 +1,6 @@
 use gurt_api::{limits::{enforce_max_message_size, MAX_MESSAGE_BYTES}, status::StatusCode};
 use anyhow::Result;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::AsyncReadExt;
 
 #[derive(Debug, Clone)]
 pub struct Request {
@@ -31,7 +31,7 @@ where
         if buf.windows(4).any(|w| w == b"\r\n\r\n") { break; }
     }
     let header_end = find_header_end(&buf).ok_or(StatusCode::BadRequest)?;
-    let (head, mut rest) = buf.split_at(header_end + 4);
+    let (head, rest) = buf.split_at(header_end + 4);
     let head_str = std::str::from_utf8(head).map_err(|_| StatusCode::BadRequest)?;
     let mut lines = head_str.split("\r\n");
     let start = lines.next().unwrap_or("");
@@ -124,4 +124,3 @@ pub fn make_empty_response(code: StatusCode) -> String {
     let bytes = make_response(code, &[], &[]);
     String::from_utf8(bytes).unwrap_or_default()
 }
-

@@ -5,6 +5,7 @@ mod router;
 use anyhow::Result;
 use rustls::ProtocolVersion;
 use tokio::{net::TcpListener, io::AsyncWriteExt};
+use std::net::SocketAddr;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -14,7 +15,18 @@ async fn main() -> Result<()> {
     let key_path = std::env::var("GURT_KEY").unwrap_or_else(|_| "gurt-server.key".to_string());
     let addr = std::env::var("GURT_ADDR").unwrap_or_else(|_| "127.0.0.1:4878".to_string());
 
-    let tls = tls::TlsConfig::load(&cert_path, &key_path)?;
+    eprintln!(
+        "[tls] loading server certificate and key\n  cert: {cert_path}\n  key:  {key_path}"
+    );
+    let tls = match tls::TlsConfig::load(&cert_path, &key_path) {
+        Ok(t) => t,
+        Err(e) => {
+            eprintln!(
+                "[tls] config error: {e}\n\nHint:\n- Set env vars GURT_CERT and GURT_KEY to your cert/key paths\n- Or generate dev certs with mkcert and run:\n    mkcert -install\n    mkcert localhost 127.0.0.1 ::1\n    export GURT_CERT=./localhost+2.pem\n    export GURT_KEY=./localhost+2-key.pem\n"
+            );
+            std::process::exit(1);
+        }
+    };
     let acceptor = tls.into_acceptor();
 
     let listener = TcpListener::bind(&addr).await?;
@@ -24,23 +36,56 @@ async fn main() -> Result<()> {
         let (stream, peer) = listener.accept().await?;
         let acceptor = acceptor.clone();
         tokio::spawn(async move {
-            if let Err(err) = handle_conn(stream, acceptor).await {
-                eprintln!("connection {} error: {err}", peer);
+            if let Err(err) = handle_conn(stream, acceptor, peer).await {
+                eprintln!(
+                    "[tls] connection {peer} error: {err}\n  note: if client saw 'UnknownCA', ensure the client trusts the server certificate/CA"
+                );
             }
         });
     }
 }
 
-async fn handle_conn(mut tcp: tokio::net::TcpStream, acceptor: tokio_rustls::TlsAcceptor) -> Result<()> {
+async fn handle_conn(
+    mut tcp: tokio::net::TcpStream,
+    acceptor: tokio_rustls::TlsAcceptor,
+    peer: SocketAddr,
+) -> Result<()> {
     // Stage 1: plaintext HANDSHAKE (per docs)
     proto::handshake::read_and_respond_handshake(&mut tcp).await?;
 
     // Stage 2: upgrade to TLS 1.3 + ALPN GURT/1.0
-    let mut tls_stream = acceptor.accept(tcp).await?;
+    let mut tls_stream = match acceptor.accept(tcp).await {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("[tls] accept error from {peer}: {e}");
+            return Err(e.into());
+        }
+    };
     // Require TLS 1.3 per protocol requirements
     let (_, conn) = tls_stream.get_ref();
+    // Log negotiated parameters
+    let alpn = conn
+        .alpn_protocol()
+        .map(|p| String::from_utf8_lossy(p).to_string())
+        .unwrap_or_else(|| "<none>".to_string());
+    let sni = conn.sni_hostname().unwrap_or("<none>");
+    let suite = conn
+        .negotiated_cipher_suite()
+        .map(|cs| format!("{:?}", cs.suite()))
+        .unwrap_or_else(|| "<none>".to_string());
+    eprintln!(
+        "[tls] handshake ok from {peer}: version={:?} alpn={} sni={} cipher={}",
+        conn.protocol_version(),
+        alpn,
+        sni,
+        suite
+    );
     if conn.protocol_version() != Some(ProtocolVersion::TLSv1_3) {
         // Drop connection if not TLS 1.3
+        eprintln!(
+            "[tls] dropping {peer}: negotiated version {:?} (require TLSv1.3)",
+            conn.protocol_version()
+        );
         let _ = tls_stream.shutdown().await;
         return Ok(());
     }

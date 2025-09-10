@@ -32,13 +32,11 @@ fn handle_search(req: Request) -> Result<Response> {
 }
 
 fn percent_decode(s: &str) -> String {
-    // Best-effort, minimal decoding
-    url::form_urlencoded::parse(s.as_bytes()).into_owned().collect::<Vec<(String,String)>>().into_iter().map(|(k,v)|{
-        if k.is_empty() { v } else { format!("{k}={v}") }
-    }).collect::<Vec<_>>().join("&")
+    percent_encoding::percent_decode_str(s)
+        .decode_utf8_lossy()
+        .to_string()
 }
 
 fn json_response(code: StatusCode, body: Vec<u8>) -> Response {
     Response { code, headers: vec![("content-type".into(), "application/json".into())], body }
 }
-
