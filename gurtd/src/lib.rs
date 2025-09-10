@@ -3,3 +3,4 @@ pub mod proto;
 pub mod router;
 pub mod query;
 pub mod index;
+pub mod crawler;
