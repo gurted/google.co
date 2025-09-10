@@ -68,10 +68,10 @@ async fn handle_conn(
         .alpn_protocol()
         .map(|p| String::from_utf8_lossy(p).to_string())
         .unwrap_or_else(|| "<none>".to_string());
-    let sni = conn.sni_hostname().unwrap_or("<none>");
+    let sni = "<none>";
     let suite = conn
         .negotiated_cipher_suite()
-        .map(|cs| format!("{:?}", cs.suite()))
+        .map(|cs| format!("{:?}", cs))
         .unwrap_or_else(|| "<none>".to_string());
     eprintln!(
         "[tls] handshake ok from {peer}: version={:?} alpn={} sni={} cipher={}",

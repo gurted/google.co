@@ -1,5 +1,6 @@
-use anyhow::{anyhow, Result, Context};
-use rustls::{Certificate, PrivateKey, ServerConfig};
+use anyhow::{anyhow, Context, Result};
+use rustls::ServerConfig;
+use rustls::pki_types::{CertificateDer, PrivateKeyDer};
 use std::{fs::File, io::BufReader, sync::Arc};
 use tokio_rustls::TlsAcceptor;
 use sha2::{Sha256, Digest};
@@ -13,8 +14,7 @@ impl TlsConfig {
         let certs = load_certs(cert_path)?;
         let key = load_key(key_path)?;
 
-        let mut config = ServerConfig::builder()
-            .with_safe_defaults()
+        let mut config = rustls::ServerConfig::builder()
             .with_no_client_auth()
             .with_single_cert(certs, key)?;
 
@@ -29,21 +29,19 @@ impl TlsConfig {
     }
 }
 
-fn load_certs(path: &str) -> Result<Vec<Certificate>> {
+fn load_certs(path: &str) -> Result<Vec<CertificateDer<'static>>> {
     let f = File::open(path).with_context(|| format!("opening certificate '{path}'"))?;
     let mut reader = BufReader::new(f);
-    let certs = rustls_pemfile::certs(&mut reader)
-        .map_err(|_| anyhow!("invalid certs"))?
-        .into_iter()
-        .map(Certificate)
-        .collect::<Vec<_>>();
+    let certs: Vec<CertificateDer<'static>> = rustls_pemfile::certs(&mut reader)
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|_| anyhow!("invalid certs"))?;
     if certs.is_empty() {
         return Err(anyhow!("no certificates found in {path}"));
     }
     // Log basic info and fingerprint of first cert for debugging
-    if let Some(Certificate(first)) = certs.get(0) {
+    if let Some(first) = certs.get(0) {
         let mut hasher = Sha256::new();
-        hasher.update(first);
+        hasher.update(first.as_ref());
         let digest = hasher.finalize();
         let fp = digest.iter().map(|b| format!("{:02x}", b)).collect::<Vec<_>>().join(":");
         eprintln!(
@@ -55,18 +53,17 @@ fn load_certs(path: &str) -> Result<Vec<Certificate>> {
     Ok(certs)
 }
 
-fn load_key(path: &str) -> Result<PrivateKey> {
+fn load_key(path: &str) -> Result<PrivateKeyDer<'static>> {
     let f = File::open(path).with_context(|| format!("opening private key '{path}'"))?;
     let mut reader = BufReader::new(f);
-    // Try PKCS8 first
-    if let Ok(mut keys) = rustls_pemfile::pkcs8_private_keys(&mut reader) {
-        if let Some(k) = keys.pop() { return Ok(PrivateKey(k)); }
-    }
-    // Fallback RSA
-    let f = File::open(path).with_context(|| format!("opening private key '{path}'"))?;
-    let mut reader = BufReader::new(f);
-    if let Ok(mut keys) = rustls_pemfile::rsa_private_keys(&mut reader) {
-        if let Some(k) = keys.pop() { return Ok(PrivateKey(k)); }
+    // Iterate PEM items until we find a supported key
+    while let Some(item) = rustls_pemfile::read_one(&mut reader).map_err(|_| anyhow!("invalid pem"))? {
+        match item {
+            rustls_pemfile::Item::Pkcs8Key(k) => return Ok(PrivateKeyDer::from(k)),
+            rustls_pemfile::Item::Pkcs1Key(k) => return Ok(PrivateKeyDer::from(k)),
+            rustls_pemfile::Item::Sec1Key(k) => return Ok(PrivateKeyDer::from(k)),
+            _ => {}
+        }
     }
     Err(anyhow!("no valid private key in {path}"))
 }

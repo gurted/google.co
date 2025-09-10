@@ -1,4 +1,5 @@
 use gurt_api::{limits::{enforce_max_message_size, MAX_MESSAGE_BYTES}, status::StatusCode};
+use memchr::{memmem::Finder, memchr};
 use anyhow::Result;
 use tokio::io::AsyncReadExt;
 
@@ -21,16 +22,27 @@ where
     S: AsyncReadExt + Unpin,
 {
     // Read headers up to CRLFCRLF with total cap
-    let mut buf = Vec::new();
+    let mut buf = Vec::with_capacity(4096);
     let mut tmp = [0u8; 2048];
+    // Track where to resume scanning for CRLFCRLF to avoid O(n^2) rescans
+    let mut search_from: usize = 0;
+    let finder = Finder::new(b"\r\n\r\n");
+    let mut header_end: Option<usize> = None;
     loop {
         let n = stream.read(&mut tmp).await.map_err(|_| StatusCode::InternalServerError)?;
         if n == 0 { return Err(StatusCode::BadRequest); }
+        let before_len = buf.len();
         buf.extend_from_slice(&tmp[..n]);
         if buf.len() > MAX_MESSAGE_BYTES { return Err(StatusCode::RequestEntityTooLarge); }
-        if buf.windows(4).any(|w| w == b"\r\n\r\n") { break; }
+        // Only scan newly appended region (with overlap for boundary cases)
+        let start = search_from.saturating_sub(3);
+        if let Some(rel) = finder.find(&buf[start..]) {
+            header_end = Some(start + rel);
+            break;
+        }
+        search_from = before_len + n;
     }
-    let header_end = find_header_end(&buf).ok_or(StatusCode::BadRequest)?;
+    let header_end = header_end.ok_or(StatusCode::BadRequest)?;
     let (head, rest) = buf.split_at(header_end + 4);
     let head_str = std::str::from_utf8(head).map_err(|_| StatusCode::BadRequest)?;
     let mut lines = head_str.split("\r\n");
@@ -45,9 +57,10 @@ where
     let mut content_length: usize = 0;
     for line in lines {
         if line.is_empty() { continue; }
-        if let Some((name, value)) = line.split_once(':') {
-            let name = name.trim().to_ascii_lowercase();
-            let value = value.trim().to_string();
+        if let Some(idx) = memchr(b':', line.as_bytes()) {
+            let (name_raw, value_raw) = line.split_at(idx);
+            let name = name_raw.trim().to_ascii_lowercase();
+            let value = value_raw[1..].trim().to_string(); // skip ':'
             if name == "content-length" {
                 if let Ok(n) = value.parse::<usize>() { content_length = n; }
             }
@@ -75,9 +88,7 @@ where
     Ok(Request { method, path, headers, body })
 }
 
-fn find_header_end(buf: &[u8]) -> Option<usize> {
-    buf.windows(4).position(|w| w == b"\r\n\r\n")
-}
+// kept no helper; detection is handled incrementally with memchr::memmem
 
 pub struct Response {
     pub code: StatusCode,
