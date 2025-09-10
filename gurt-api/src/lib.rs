@@ -4,6 +4,9 @@ pub mod status;
 pub mod limits;
 pub mod request;
 
+#[cfg(feature = "json")]
+pub mod response;
+
 pub mod server {
     use std::path::PathBuf;
 

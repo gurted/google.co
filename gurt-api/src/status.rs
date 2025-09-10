@@ -2,6 +2,7 @@
 pub enum StatusCode {
     Ok,
     BadRequest,
+    TooManyRequests,
     RequestEntityTooLarge,
     InternalServerError,
 }
@@ -11,9 +12,9 @@ impl StatusCode {
         match self {
             StatusCode::Ok => 200,
             StatusCode::BadRequest => 400,
+            StatusCode::TooManyRequests => 429,
             StatusCode::RequestEntityTooLarge => 413,
             StatusCode::InternalServerError => 500,
         }
     }
 }
-

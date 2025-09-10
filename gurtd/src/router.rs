@@ -1,5 +1,7 @@
 use anyhow::Result;
 use gurt_api::status::StatusCode;
+use gurt_api::response::{SearchResponse, SearchResultItem};
+use serde_json;
 use crate::proto::http_like::{Request, Response};
 
 pub fn handle(req: Request) -> Result<Response> {
@@ -24,10 +26,21 @@ fn handle_search(req: Request) -> Result<Response> {
     if q.trim().is_empty() {
         return Ok(Response { code: StatusCode::BadRequest, headers: vec![], body: vec![] });
     }
-    // Placeholder JSON; real schema in Task 2
-    let body = format!(
-        "{{\"query\":{q:?},\"total\":0,\"page\":1,\"size\":10,\"results\":[]}}"
-    ).into_bytes();
+    // Overload and internal error mapping (stubbed via env flags for now)
+    if std::env::var("GURT_OVERLOADED").ok().filter(|v| v != "0").is_some() {
+        return Ok(Response { code: StatusCode::TooManyRequests, headers: vec![], body: vec![] });
+    }
+    if std::env::var("GURT_FORCE_500").ok().filter(|v| v != "0").is_some() {
+        return Ok(Response { code: StatusCode::InternalServerError, headers: vec![], body: vec![] });
+    }
+    let resp = SearchResponse {
+        query: q,
+        total: 0,
+        page: 1,
+        size: 10,
+        results: Vec::new(),
+    };
+    let body = serde_json::to_vec(&resp).unwrap_or_else(|_| b"{}".to_vec());
     Ok(json_response(StatusCode::Ok, body))
 }
 

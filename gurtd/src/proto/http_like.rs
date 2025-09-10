@@ -106,6 +106,7 @@ pub fn make_response(code: StatusCode, headers: &[(String, String)], body: &[u8]
     let reason = match code {
         StatusCode::Ok => "OK",
         StatusCode::BadRequest => "BAD_REQUEST",
+        StatusCode::TooManyRequests => "TOO_MANY_REQUESTS",
         StatusCode::RequestEntityTooLarge => "TOO_LARGE",
         StatusCode::InternalServerError => "INTERNAL_SERVER_ERROR",
     };
