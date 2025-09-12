@@ -20,8 +20,5 @@ impl IndexEngine for NoopIndexEngine {
 
     fn refresh(&self) -> Result<()> { Ok(()) }
 
-    fn search(&self, _query: &ParsedQuery, _page: usize, _size: usize) -> Result<Vec<SearchHit>> {
-        Ok(Vec::new())
-    }
+    fn search(&self, _query: &ParsedQuery, _page: usize, _size: usize) -> Result<Vec<SearchHit>> { Ok(Vec::new()) }
 }
-

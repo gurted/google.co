@@ -1,8 +1,9 @@
 use std::path::Path;
 use std::sync::Mutex;
 use anyhow::{Context, Result};
-use tantivy::schema::{Field, IndexRecordOption, Schema, SchemaBuilder, TextFieldIndexing, TextOptions, STORED, STRING, FAST, INDEXED};
+use tantivy::schema::{Field, IndexRecordOption, Schema, SchemaBuilder, TextFieldIndexing, TextOptions, STORED, STRING, FAST, INDEXED, Value};
 use tantivy::{Index, IndexReader, IndexWriter};
+use tantivy::Document as _; // bring to_json into scope
 use tantivy::doc;
 use tantivy::collector::TopDocs;
 use tantivy::query::{BooleanQuery, Occur, Query, TermQuery};
@@ -143,8 +144,15 @@ impl crate::index::IndexEngine for TantivyIndexEngine {
         let top_docs = searcher.search(&bool_query, &TopDocs::with_limit(size).and_offset(offset))?;
 
         let mut out = Vec::with_capacity(top_docs.len());
-        for (score, _addr) in top_docs {
-            out.push(crate::index::SearchHit { title: String::new(), url: String::new(), score });
+        for (score, addr) in top_docs {
+            let doc = searcher.doc::<tantivy::TantivyDocument>(addr)?;
+            let json = doc.to_json(&self.schema);
+            let v: serde_json::Value = serde_json::from_str(&json).unwrap_or(serde_json::json!({}));
+            let title = v.get("title").and_then(|x| x.as_str()).unwrap_or("").to_string();
+            let url = v.get("url").and_then(|x| x.as_str()).unwrap_or("").to_string();
+            let domain = v.get("domain").and_then(|x| x.as_str()).unwrap_or("").to_string();
+            let fetch_time = v.get("fetch_time").and_then(|x| x.as_i64()).unwrap_or(0);
+            out.push(crate::index::SearchHit { title, url, domain, fetch_time, score });
         }
         Ok(out)
     }

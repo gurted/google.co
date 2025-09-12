@@ -19,6 +19,8 @@ pub struct IndexDocument {
 pub struct SearchHit {
     pub title: String,
     pub url: String,
+    pub domain: String,
+    pub fetch_time: i64,
     pub score: f32,
 }
 

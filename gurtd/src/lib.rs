@@ -5,3 +5,4 @@ pub mod query;
 pub mod index;
 pub mod crawler;
 pub mod link;
+pub mod search;

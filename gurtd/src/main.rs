@@ -1,6 +1,4 @@
-mod tls;
-mod proto;
-mod router;
+use gurtd::{tls, proto, router};
 
 use anyhow::Result;
 use rustls::ProtocolVersion;
