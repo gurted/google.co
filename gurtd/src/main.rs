@@ -98,7 +98,7 @@ async fn handle_conn(
         }
     };
 
-    let response = router::handle(req)?;
+    let response = router::handle_with_peer(req, Some(peer))?;
     let bytes = response.into_bytes();
     tls_stream.write_all(&bytes).await?;
     Ok(())
