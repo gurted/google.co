@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Submit a Domain - Gurted Search</title>
+  <font name="playfair" src="https://fonts.gstatic.com/l/font?kit=nuFiD-vYSZviVYUb_rj3ij__anPXPT7KnEkQ2Fo0XcXumgW2Kb6JkDjEdDrmYdycAeI" />
+</head>
+<body style="bg-[#0b0f19] text-[#e6e6f0] font-sans">
+  <div style="max-w-[900px] mx-auto p-6 flex flex-col gap-5">
+    <header style="flex items-center justify-between">
+      <h1 style="text-3xl text-[#6366f1] font-bold">Submit a Domain</h1>
+      <a href="/" style="text-sm text-[#9ca3af] hover:text-[#e6e6f0]">Back to search</a>
+    </header>
+    <p style="text-[#cbd5e1]">Share a <code>gurt://</code> domain to enqueue it for indexing.</p>
+    <form id="domain-form" style="flex gap-2 items-center">
+      <input id="domain" type="text" placeholder="example.real" autocomplete="off" style="flex-1 min-w-0 p-3 bg-[#0f1526] text-[#e6e6f0] rounded border border-[#202637] focus:ring-2 ring-[#4f46e5]" />
+      <button id="submit" type="submit" style="bg-[#6366f1] text-white rounded px-5 py-3 hover:bg-[#4f46e5] active:bg-[#4338ca]">Submit</button>
+    </form>
+    <div id="status" style="min-h-6 text-sm"></div>
+    <section style="text-sm text-[#9ca3af]">
+      <p>After submission we will crawl the domain, process its pages, and add them to the index. Dynamic pages may require additional passes.</p>
+    </section>
+  </div>
+  <script type="text/lua" src="/assets/utils.lua"></script>
+  <script type="text/lua" src="/assets/domains.lua"></script>
+</body>
+</html>

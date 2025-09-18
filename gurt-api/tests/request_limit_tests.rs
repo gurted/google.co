@@ -1,7 +1,7 @@
 use gurt_api::{limits::MAX_MESSAGE_BYTES, request::parse_request, status::StatusCode};
 
 fn make_request(prefix: &str, size: usize) -> Vec<u8> {
-    let mut body = vec![b'a'; size.saturating_sub(prefix.len())];
+    let body = vec![b'a'; size.saturating_sub(prefix.len())];
     let mut req = prefix.as_bytes().to_vec();
     req.extend_from_slice(&body);
     req
@@ -23,4 +23,3 @@ fn parse_rejects_over_max_size_with_413() {
     assert_eq!(err, StatusCode::RequestEntityTooLarge);
     assert_eq!(err.as_u16(), 413);
 }
-

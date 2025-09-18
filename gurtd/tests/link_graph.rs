@@ -1,4 +1,6 @@
-use gurtd::link::{extract_links, LinkGraph, domain_trust_from_cname_depth, combine_authority, AuthorityStore};
+use gurtd::link::{
+    combine_authority, domain_trust_from_cname_depth, extract_links, AuthorityStore, LinkGraph,
+};
 
 #[test]
 fn extract_links_from_html() {
@@ -47,4 +49,3 @@ fn authority_store_roundtrip() {
     assert_eq!(r.len(), 2);
     assert!((r.get("gurt://x").unwrap() - 0.5).abs() < 1e-6);
 }
-

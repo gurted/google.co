@@ -3,7 +3,9 @@ use std::path::PathBuf;
 use gurt_api::server::{init_tls, ServerConfig};
 
 fn fixture(path: &str) -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures").join(path)
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures")
+        .join(path)
 }
 
 #[test]
@@ -32,4 +34,3 @@ fn errors_on_invalid_pem() {
     let msg = format!("{}", err);
     assert!(msg.contains("invalid pem"));
 }
-

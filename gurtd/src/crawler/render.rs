@@ -16,7 +16,12 @@ pub struct RenderConfig {
 }
 
 impl RenderConfig {
-    pub fn with_budget_ms(ms: u64) -> Self { Self { time_budget: Duration::from_millis(ms), simulated_cost: None } }
+    pub fn with_budget_ms(ms: u64) -> Self {
+        Self {
+            time_budget: Duration::from_millis(ms),
+            simulated_cost: None,
+        }
+    }
 }
 
 /// Outcome of a render attempt.
@@ -33,8 +38,12 @@ pub struct RenderOutcome {
 /// - Detects occurrences of "network.fetch(".
 pub fn detect_dynamic(html: &str) -> Option<DynamicReason> {
     let lower = html.to_ascii_lowercase();
-    if lower.contains("<script") && lower.contains("lua") { return Some(DynamicReason::LuaScriptTag); }
-    if lower.contains("network.fetch(") { return Some(DynamicReason::NetworkFetch); }
+    if lower.contains("<script") && lower.contains("lua") {
+        return Some(DynamicReason::LuaScriptTag);
+    }
+    if lower.contains("network.fetch(") {
+        return Some(DynamicReason::NetworkFetch);
+    }
     None
 }
 
@@ -44,16 +53,30 @@ pub fn detect_dynamic(html: &str) -> Option<DynamicReason> {
 /// returns the original content as static with `timed_out = true`.
 pub async fn render_once(html: &str, cfg: &RenderConfig) -> RenderOutcome {
     let reason = detect_dynamic(html);
-    if reason.is_none() { return RenderOutcome { content: html.to_string(), render_mode: "static".into(), timed_out: false, reason: None }; }
+    if reason.is_none() {
+        return RenderOutcome {
+            content: html.to_string(),
+            render_mode: "static".into(),
+            timed_out: false,
+            reason: None,
+        };
+    }
 
     // Enforce budget using a simulated cost (tests) or minimal yield
     if let Some(cost) = cfg.simulated_cost {
         if cost > cfg.time_budget {
             // Exceeds budget: return static fallback
-            return RenderOutcome { content: html.to_string(), render_mode: "static".into(), timed_out: true, reason };
+            return RenderOutcome {
+                content: html.to_string(),
+                render_mode: "static".into(),
+                timed_out: true,
+                reason,
+            };
         }
         // sleep to simulate work but within budget
-        if !cost.is_zero() { tokio::time::sleep(cost).await; }
+        if !cost.is_zero() {
+            tokio::time::sleep(cost).await;
+        }
     } else {
         // Yield once to simulate minimal work without exceeding budget
         tokio::task::yield_now().await;
@@ -62,13 +85,20 @@ pub async fn render_once(html: &str, cfg: &RenderConfig) -> RenderOutcome {
     // Perform a simple transformation: strip <script> blocks and append a marker
     let mut out = html.to_string();
     out = strip_script_blocks(&out);
-    if !out.contains("<!-- rendered -->") { out.push_str("\n<!-- rendered -->"); }
+    if !out.contains("<!-- rendered -->") {
+        out.push_str("\n<!-- rendered -->");
+    }
 
-    RenderOutcome { content: out, render_mode: "rendered".into(), timed_out: false, reason }
+    RenderOutcome {
+        content: out,
+        render_mode: "rendered".into(),
+        timed_out: false,
+        reason,
+    }
 }
 
 fn strip_script_blocks(input: &str) -> String {
-    // Naive scan removing <script ...>...</script> segments; case-insensitive open tag; close tag </script>
+    // TODO: this is a naive scan; swap for a real HTML tokenizer when script edge cases start to bite.
     let mut out = String::new();
     let mut rest = input;
     loop {
@@ -99,8 +129,14 @@ mod tests {
 
     #[test]
     fn heuristics_detect_lua_and_fetch() {
-        assert!(matches!(detect_dynamic("<script type=\"text/lua\">print(1)</script>"), Some(DynamicReason::LuaScriptTag)));
-        assert!(matches!(detect_dynamic("<div>call network.fetch(\"/api\")</div>"), Some(DynamicReason::NetworkFetch)));
+        assert!(matches!(
+            detect_dynamic("<script type=\"text/lua\">print(1)</script>"),
+            Some(DynamicReason::LuaScriptTag)
+        ));
+        assert!(matches!(
+            detect_dynamic("<div>call network.fetch(\"/api\")</div>"),
+            Some(DynamicReason::NetworkFetch)
+        ));
         assert!(detect_dynamic("<div>static</div>").is_none());
     }
 
@@ -139,4 +175,3 @@ mod tests {
         assert_eq!(out.content, html);
     }
 }
-

@@ -1,0 +1,11 @@
+[package]
+name = "gurt-index"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0"
+serde_json = "1.0"
+tantivy = "0.25"
+gurt-query = { path = "../gurt-query" }
+gurt-macros = { path = "../gurt-macros" }

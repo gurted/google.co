@@ -1,16 +1,16 @@
-use tokio::io::{duplex, AsyncReadExt, AsyncWriteExt};
 use gurt_api::limits::MAX_MESSAGE_BYTES;
-use gurtd::proto::http_like::{read_request, make_empty_response};
+use gurtd::proto::http_like::{make_empty_response, read_request};
+use tokio::io::{duplex, AsyncReadExt, AsyncWriteExt};
 
 // Integration-style test at the server protocol layer: feed >10MB request
 // and assert that the emitted response is a 413 TOO_LARGE frame.
 #[tokio::test]
 async fn oversized_request_emits_413_response() {
-    // Duplex capacity is small; the server task will drain as we write.
+    // Duplex capacity is small so the server half drains while the client writes.
     let (mut client, mut server) = duplex(8192);
 
-    // Spawn a server task that attempts to read a request, then writes
-    // an empty error response if the request is rejected (mirrors gurtd main).
+    // Spawn the server half, mirroring gurtd main: read a request, then
+    // write an empty error response when validation fails.
     let srv = tokio::spawn(async move {
         match read_request(&mut server).await {
             Ok(_req) => {
@@ -43,8 +43,11 @@ async fn oversized_request_emits_413_response() {
     buf.resize(1024, 0);
     let n = client.read(&mut buf).await.unwrap();
     let resp = String::from_utf8_lossy(&buf[..n]);
-    assert!(resp.starts_with("GURT/1.0.0 413 TOO_LARGE"), "response was: {}", resp);
+    assert!(
+        resp.starts_with("GURT/1.0.0 413 TOO_LARGE"),
+        "response was: {}",
+        resp
+    );
 
     srv.await.unwrap();
 }
-

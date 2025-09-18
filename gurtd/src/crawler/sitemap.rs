@@ -10,7 +10,9 @@ pub fn parse_sitemap_xml(xml: &str) -> Vec<String> {
             if let Some(end) = after_tag.find("</loc>") {
                 let url = &after_tag[..end];
                 let u = url.trim().to_string();
-                if !u.is_empty() { out.push(u); }
+                if !u.is_empty() {
+                    out.push(u);
+                }
                 rest = &after_tag[end + 6..]; // move past </loc>
                 continue;
             }
@@ -22,7 +24,10 @@ pub fn parse_sitemap_xml(xml: &str) -> Vec<String> {
 }
 
 /// Fetch sitemap.xml from gurt://<domain>/sitemap.xml and parse URLs.
-pub async fn fetch_sitemap_urls(client: &crate::crawler::client::GurtClient, domain: &str) -> Vec<String> {
+pub async fn fetch_sitemap_urls(
+    client: &crate::crawler::client::GurtClient,
+    domain: &str,
+) -> Vec<String> {
     let url = format!("gurt://{}/sitemap.xml", domain);
     match client.fetch_with_retries(&url, 1).await {
         Ok(resp) if (200..300).contains(&resp.code) => {
@@ -35,14 +40,23 @@ pub async fn fetch_sitemap_urls(client: &crate::crawler::client::GurtClient, dom
 
 /// Reorder candidate URLs by prioritizing those present in the sitemap list.
 /// URLs appearing in `sitemap_urls` are kept first (stable order), followed by others.
-pub fn prioritize_with_sitemap(mut candidates: Vec<String>, sitemap_urls: &[String]) -> Vec<String> {
-    if sitemap_urls.is_empty() || candidates.is_empty() { return candidates; }
+pub fn prioritize_with_sitemap(
+    mut candidates: Vec<String>,
+    sitemap_urls: &[String],
+) -> Vec<String> {
+    if sitemap_urls.is_empty() || candidates.is_empty() {
+        return candidates;
+    }
     use std::collections::HashSet;
     let sm: HashSet<&str> = sitemap_urls.iter().map(|s| s.as_str()).collect();
     let mut a = Vec::with_capacity(candidates.len());
     let mut b = Vec::new();
     for u in candidates.drain(..) {
-        if sm.contains(u.as_str()) { a.push(u); } else { b.push(u); }
+        if sm.contains(u.as_str()) {
+            a.push(u);
+        } else {
+            b.push(u);
+        }
     }
     a.extend(b);
     a

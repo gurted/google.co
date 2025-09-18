@@ -2,7 +2,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tokio::io::{AsyncWriteExt, AsyncReadExt};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use gurtd::crawler::client::{ClientError, DynStream, GurtClient};
 
@@ -11,7 +11,11 @@ async fn client_parses_success_response() {
     let (mut server, client_side) = tokio::io::duplex(1 << 16);
     let shared = Arc::new(Mutex::new(Some(client_side)));
     // connector that returns the client side of the duplex stream once
-    let connector: Arc<dyn Fn(&str, u16) -> Pin<Box<dyn Future<Output=Result<DynStream, ClientError>> + Send>> + Send + Sync> = {
+    let connector: Arc<
+        dyn Fn(&str, u16) -> Pin<Box<dyn Future<Output = Result<DynStream, ClientError>> + Send>>
+            + Send
+            + Sync,
+    > = {
         let shared = shared.clone();
         Arc::new(move |_host: &str, _port: u16| {
             let cli = shared.lock().unwrap().take().ok_or(ClientError::Connection);
@@ -51,7 +55,11 @@ async fn client_parses_success_response() {
 async fn client_errors_on_oversize_body() {
     let (mut server, client_side) = tokio::io::duplex(1 << 16);
     let shared = Arc::new(Mutex::new(Some(client_side)));
-    let connector: Arc<dyn Fn(&str, u16) -> Pin<Box<dyn Future<Output=Result<DynStream, ClientError>> + Send>> + Send + Sync> = {
+    let connector: Arc<
+        dyn Fn(&str, u16) -> Pin<Box<dyn Future<Output = Result<DynStream, ClientError>> + Send>>
+            + Send
+            + Sync,
+    > = {
         let shared = shared.clone();
         Arc::new(move |_host: &str, _port: u16| {
             let cli = shared.lock().unwrap().take().ok_or(ClientError::Connection);
@@ -79,7 +87,10 @@ async fn client_errors_on_oversize_body() {
     };
 
     let (res, _) = tokio::join!(fut, srv);
-    match res { Err(ClientError::Io) => {}, other => panic!("expected Io, got {:?}", other) }
+    match res {
+        Err(ClientError::Io) => {}
+        other => panic!("expected Io, got {:?}", other),
+    }
 }
 
 #[tokio::test]
@@ -88,7 +99,11 @@ async fn client_retries_on_timeout() {
     static ATTEMPTS: AtomicUsize = AtomicUsize::new(0);
 
     // connector that never produces a stream (simulates a hang until timeout)
-    let connector: Arc<dyn Fn(&str, u16) -> Pin<Box<dyn Future<Output=Result<DynStream, ClientError>> + Send>> + Send + Sync> = Arc::new(|_host: &str, _port: u16| {
+    let connector: Arc<
+        dyn Fn(&str, u16) -> Pin<Box<dyn Future<Output = Result<DynStream, ClientError>> + Send>>
+            + Send
+            + Sync,
+    > = Arc::new(|_host: &str, _port: u16| {
         ATTEMPTS.fetch_add(1, Ordering::Relaxed);
         Box::pin(async move {
             tokio::time::sleep(Duration::from_millis(100)).await;
@@ -99,7 +114,11 @@ async fn client_retries_on_timeout() {
     });
     let mut client = GurtClient::new_test(connector);
     client.req_timeout = Duration::from_millis(10);
-    let res = client.fetch_with_retries("gurt://example.real/hang", 1).await;
+    let res = client
+        .fetch_with_retries("gurt://example.real/hang", 1)
+        .await;
     assert_eq!(ATTEMPTS.load(Ordering::Relaxed), 2, "should attempt twice");
-    assert!(matches!(res, Err(ClientError::Timeout)) || matches!(res, Err(ClientError::Connection)));
+    assert!(
+        matches!(res, Err(ClientError::Timeout)) || matches!(res, Err(ClientError::Connection))
+    );
 }

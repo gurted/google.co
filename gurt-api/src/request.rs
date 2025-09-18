@@ -26,6 +26,8 @@ pub fn parse_request(raw: &[u8]) -> Result<Request, StatusCode> {
     if method.is_empty() || path.is_empty() {
         return Err(StatusCode::BadRequest);
     }
-    Ok(Request { method: method.to_string(), path: path.to_string() })
+    Ok(Request {
+        method: method.to_string(),
+        path: path.to_string(),
+    })
 }
-

@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-const MAX_HANDSHAKE_BYTES: usize = 8 * 1024; // 8KB cap for safety
+const MAX_HANDSHAKE_BYTES: usize = 8 * 1024; // 8KB cap
 const PROTO_VERSION: &str = "GURT/1.0.0";
 
 pub async fn read_and_respond_handshake<S>(stream: &mut S) -> Result<()>
@@ -12,7 +12,9 @@ where
     let mut tmp = [0u8; 512];
     loop {
         let n = stream.read(&mut tmp).await?;
-        if n == 0 { return Err(anyhow!("handshake: connection closed")); }
+        if n == 0 {
+            return Err(anyhow!("handshake: connection closed"));
+        }
         buf.extend_from_slice(&tmp[..n]);
         if buf.len() > MAX_HANDSHAKE_BYTES {
             return Err(anyhow!("handshake: too large"));
@@ -20,7 +22,6 @@ where
         if buf.windows(4).any(|w| w == b"\r\n\r\n") {
             break;
         }
-        // continue reading
     }
 
     // Validate first line: HANDSHAKE / GURT/1.0.0
@@ -49,4 +50,3 @@ date: {date}\r\n\r\n",
     stream.write_all(resp.as_bytes()).await?;
     Ok(())
 }
-

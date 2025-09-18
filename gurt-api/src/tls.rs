@@ -8,7 +8,7 @@ pub enum TlsError {
     NotFound(String),
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
-    #[error("invalid pem format")] 
+    #[error("invalid pem format")]
     InvalidPem,
 }
 
@@ -45,4 +45,3 @@ impl TlsMaterial {
                 || self.key_pem.contains("-----BEGIN RSA PRIVATE KEY-----"))
     }
 }
-

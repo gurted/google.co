@@ -3,8 +3,8 @@ use once_cell::sync::Lazy;
 use std::sync::Mutex;
 
 static TEST_MUTEX: Lazy<Mutex<()>> = Lazy::new(|| Mutex::new(()));
-use serde_json::Value;
 use gurtd::router::handle;
+use serde_json::Value;
 
 fn make_get(path: &str) -> Request {
     Request {
@@ -21,9 +21,17 @@ fn health_ready_returns_200_and_json() {
     let req = make_get("/health/ready");
     let resp = handle(req).expect("router should handle");
     assert_eq!(resp.code.as_u16(), 200);
-    let ct = resp.headers.iter().find(|(k, _)| k == "content-type").map(|(_, v)| v.as_str()).unwrap_or("");
+    let ct = resp
+        .headers
+        .iter()
+        .find(|(k, _)| k == "content-type")
+        .map(|(_, v)| v.as_str())
+        .unwrap_or("");
     assert_eq!(ct, "application/json");
-    assert_eq!(String::from_utf8_lossy(&resp.body), "{\"status\":\"ready\"}");
+    assert_eq!(
+        String::from_utf8_lossy(&resp.body),
+        "{\"status\":\"ready\"}"
+    );
 }
 
 #[test]
@@ -92,7 +100,12 @@ fn add_site_accepts_valid_domain() {
     let req = make_post_json("/api/sites", "10.0.0.1", json!({"domain":"example.real"}));
     let resp = handle(req).expect("router should handle");
     assert_eq!(resp.code.as_u16(), 200);
-    let ct = resp.headers.iter().find(|(k, _)| k == "content-type").map(|(_, v)| v.as_str()).unwrap_or("");
+    let ct = resp
+        .headers
+        .iter()
+        .find(|(k, _)| k == "content-type")
+        .map(|(_, v)| v.as_str())
+        .unwrap_or("");
     assert_eq!(ct, "application/json");
     let v: Value = serde_json::from_slice(&resp.body).expect("valid json");
     assert_eq!(v["status"], "accepted");
@@ -107,7 +120,7 @@ fn add_site_rate_limited_by_ip() {
     for i in 0..5 {
         let req = make_post_json("/api/sites", ip, json!({"domain": format!("site{i}.real")}));
         let resp = handle(req).expect("router ok");
-        assert_eq!(resp.code.as_u16(), 200, "attempt {} should be 200", i+1);
+        assert_eq!(resp.code.as_u16(), 200, "attempt {} should be 200", i + 1);
     }
     let req = make_post_json("/api/sites", ip, json!({"domain":"overflow.real"}));
     let resp = handle(req).expect("router ok");

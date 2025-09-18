@@ -1,9 +1,9 @@
 use anyhow::{anyhow, Context, Result};
-use rustls::ServerConfig;
 use rustls::pki_types::{CertificateDer, PrivateKeyDer};
+use rustls::ServerConfig;
+use sha2::{Digest, Sha256};
 use std::{fs::File, io::BufReader, sync::Arc};
 use tokio_rustls::TlsAcceptor;
-use sha2::{Sha256, Digest};
 
 pub struct TlsConfig {
     cfg: Arc<ServerConfig>,
@@ -21,7 +21,9 @@ impl TlsConfig {
         // Enforce ALPN (TLS version checked post-accept)
         config.alpn_protocols = vec![b"GURT/1.0".to_vec()];
 
-        Ok(Self { cfg: Arc::new(config) })
+        Ok(Self {
+            cfg: Arc::new(config),
+        })
     }
 
     pub fn into_acceptor(self) -> TlsAcceptor {
@@ -43,7 +45,11 @@ fn load_certs(path: &str) -> Result<Vec<CertificateDer<'static>>> {
         let mut hasher = Sha256::new();
         hasher.update(first.as_ref());
         let digest = hasher.finalize();
-        let fp = digest.iter().map(|b| format!("{:02x}", b)).collect::<Vec<_>>().join(":");
+        let fp = digest
+            .iter()
+            .map(|b| format!("{:02x}", b))
+            .collect::<Vec<_>>()
+            .join(":");
         eprintln!(
             "[tls] loaded certificate chain (n={}) from {path}\n  leaf_sha256: {}",
             certs.len(),
@@ -57,7 +63,9 @@ fn load_key(path: &str) -> Result<PrivateKeyDer<'static>> {
     let f = File::open(path).with_context(|| format!("opening private key '{path}'"))?;
     let mut reader = BufReader::new(f);
     // Iterate PEM items until we find a supported key
-    while let Some(item) = rustls_pemfile::read_one(&mut reader).map_err(|_| anyhow!("invalid pem"))? {
+    while let Some(item) =
+        rustls_pemfile::read_one(&mut reader).map_err(|_| anyhow!("invalid pem"))?
+    {
         match item {
             rustls_pemfile::Item::Pkcs8Key(k) => return Ok(PrivateKeyDer::from(k)),
             rustls_pemfile::Item::Pkcs1Key(k) => return Ok(PrivateKeyDer::from(k)),

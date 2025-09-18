@@ -1,9 +1,9 @@
-use gurtd::{tls, proto, router};
+use gurtd::{proto, router, tls};
 
 use anyhow::Result;
 use rustls::ProtocolVersion;
-use tokio::{net::TcpListener, io::AsyncWriteExt};
 use std::net::SocketAddr;
+use tokio::{io::AsyncWriteExt, net::TcpListener};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -13,9 +13,7 @@ async fn main() -> Result<()> {
     let key_path = std::env::var("GURT_KEY").unwrap_or_else(|_| "gurt-server.key".to_string());
     let addr = std::env::var("GURT_ADDR").unwrap_or_else(|_| "127.0.0.1:4878".to_string());
 
-    eprintln!(
-        "[tls] loading server certificate and key\n  cert: {cert_path}\n  key:  {key_path}"
-    );
+    eprintln!("[tls] loading server certificate and key\n  cert: {cert_path}\n  key:  {key_path}");
     let tls = match tls::TlsConfig::load(&cert_path, &key_path) {
         Ok(t) => t,
         Err(e) => {

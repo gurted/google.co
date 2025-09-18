@@ -1,7 +1,7 @@
-use std::path::PathBuf;
 use gurtd::index::tantivy::TantivyIndexEngine;
-use gurtd::index::IndexEngine;
 use gurtd::index::IndexDocument;
+use gurtd::index::IndexEngine;
+use std::path::PathBuf;
 
 fn tempdir() -> PathBuf {
     let mut p = std::env::temp_dir();
@@ -12,7 +12,10 @@ fn tempdir() -> PathBuf {
 
 fn rand_suffix() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
-    let ns = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+    let ns = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
     format!("{:x}", ns)
 }
 

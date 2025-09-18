@@ -1,0 +1,10 @@
+[package]
+name = "gurt-web"
+version = "0.1.0"
+edition = "2021"
+description = "Routing registry and helpers for Gurt"
+license = "MIT"
+publish = false
+
+[dependencies]
+

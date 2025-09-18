@@ -12,7 +12,10 @@ pub struct ParsedQuery {
 
 impl Default for QueryFilters {
     fn default() -> Self {
-        Self { site: None, filetype: None }
+        Self {
+            site: None,
+            filetype: None,
+        }
     }
 }
 
@@ -31,12 +34,16 @@ pub fn parse_query(input: &str) -> ParsedQuery {
             match k.to_ascii_lowercase().as_str() {
                 "site" => {
                     let v = strip_quotes(v).to_ascii_lowercase();
-                    if !v.is_empty() { site = Some(v); }
+                    if !v.is_empty() {
+                        site = Some(v);
+                    }
                     continue;
                 }
                 "filetype" => {
                     let v = strip_quotes(v).to_ascii_lowercase();
-                    if !v.is_empty() { filetype = Some(v); }
+                    if !v.is_empty() {
+                        filetype = Some(v);
+                    }
                     continue;
                 }
                 _ => {}
@@ -48,7 +55,10 @@ pub fn parse_query(input: &str) -> ParsedQuery {
         }
     }
 
-    ParsedQuery { terms, filters: QueryFilters { site, filetype } }
+    ParsedQuery {
+        terms,
+        filters: QueryFilters { site, filetype },
+    }
 }
 
 fn strip_quotes(s: &str) -> &str {
@@ -62,4 +72,3 @@ fn strip_quotes(s: &str) -> &str {
     }
     s
 }
-

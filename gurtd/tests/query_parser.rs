@@ -41,4 +41,3 @@ fn empty_or_missing_filter_values_are_ignored() {
     assert_eq!(pq.filters.filetype, None);
     assert_eq!(pq.terms, vec!["rust"]);
 }
-

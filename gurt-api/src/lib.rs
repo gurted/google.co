@@ -1,8 +1,10 @@
-pub mod tls;
 pub mod gurt;
-pub mod status;
+pub mod handshake;
+pub mod http_like;
 pub mod limits;
 pub mod request;
+pub mod status;
+pub mod tls;
 
 #[cfg(feature = "json")]
 pub mod response;
@@ -20,7 +22,10 @@ pub mod server {
 
     impl ServerConfig {
         pub fn new(cert_path: impl Into<PathBuf>, key_path: impl Into<PathBuf>) -> Self {
-            Self { cert_path: cert_path.into(), key_path: key_path.into() }
+            Self {
+                cert_path: cert_path.into(),
+                key_path: key_path.into(),
+            }
         }
     }
 

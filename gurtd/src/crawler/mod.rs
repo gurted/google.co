@@ -1,6 +1,6 @@
 pub mod client;
-pub mod scheduler;
-pub mod robots;
-pub mod sitemap;
-pub mod render;
 pub mod pipeline;
+pub mod render;
+pub mod robots;
+pub mod scheduler;
+pub mod sitemap;

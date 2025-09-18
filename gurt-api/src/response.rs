@@ -16,4 +16,3 @@ pub struct SearchResponse {
     pub size: u32,
     pub results: Vec<SearchResultItem>,
 }
-

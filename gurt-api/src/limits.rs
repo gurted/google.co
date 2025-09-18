@@ -12,8 +12,10 @@ pub type LimitResult<T> = Result<T, LimitError>;
 
 pub fn enforce_max_message_size(len: usize) -> LimitResult<()> {
     if len > MAX_MESSAGE_BYTES {
-        return Err(LimitError::TooLarge { max: MAX_MESSAGE_BYTES, actual: len });
+        return Err(LimitError::TooLarge {
+            max: MAX_MESSAGE_BYTES,
+            actual: len,
+        });
     }
     Ok(())
 }
-
