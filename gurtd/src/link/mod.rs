@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 /// Extract links from HTML by scanning for <a ... href="..."> occurrences.
 /// - Only returns absolute gurt:// URLs; relative URLs are ignored for simplicity in v1.
