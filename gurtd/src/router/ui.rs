@@ -155,37 +155,43 @@ pub fn render_search_ssr(q: &str) -> anyhow::Result<Response> {
         let url = escape_html(&r.url);
         let etitle = escape_html(&title);
         items.push_str(&format!(
-            "<li style=\"w-full rounded border border-[#202637] bg-[#0f1526] hover:bg-[#111a2e] p-3\">\
-                <a href=\"{url}\" style=\"text-[#e6e6f0] hover:text-[#6366f1] font-bold\">{etitle}</a>\
-                <div style=\"text-sm text-[#9ca3af] mt-1\">{url}</div>\
+            "<li style=\"w-full p-3 flex flex-col\">\
+                <a href=\"{url}\" style=\"text-[#d9d9d9] hover:text-[#6366f1] font-bold\">{etitle}</a>\
+                <div style=\"text-sm text-[#808080] mt-1\">{url}</div>\
             </li>"
         ));
     }
 
+    let sq = super::util::escape_html(q);
     let body = format!(
-        "<head><meta charset=\"utf-8\"/><title>Results - {q}</title></head>\
-                 <body style=\"bg-[#0b0f19] text-[#e6e6f0] font-sans\">\
-                     <div style=\"max-w-[900px] mx-auto p-6 flex flex-col gap-4\">\
-                         <header style=\"flex items-center justify-between\">\
-                             <h1 style=\"text-3xl text-[#6366f1] font-bold\">Results</h1>\
-                             <nav style=\"flex gap-3 text-sm text-[#9ca3af]\">\
-                                 <a href=\"/\" style=\"text-[#e6e6f0] hover:text-[#6366f1]\">Home</a>\
-                                 <span>|</span>\
-                                 <a href=\"/domains\" style=\"text-[#e6e6f0] hover:text-[#6366f1]\">Submit domain</a>\
-                             </nav>\
-                         </header>\
-                         <form id=\"qform\" style=\"flex items-center gap-2\" action=\"/search\" method=\"GET\">\
-                             <input id=\"q\" name=\"q\" type=\"text\" value=\"{}\" placeholder=\"Search...\" autofocus autocomplete=\"off\" style=\"flex-1 min-w-0 p-2 bg-[#0f1526] text-[#e6e6f0] rounded border border-[#202637] focus:ring-2 ring-[#4f46e5]\"/>\
-                             <button type=\"submit\" style=\"bg-[#6366f1] text-white rounded px-4 py-2 hover:bg-[#4f46e5] active:bg-[#4338ca]\">Search</button>\
-                         </form>\
-                                     <ul id=\"results\" style=\"mt-4 flex flex-col gap-2 items-stretch w-full list-none m-0 p-0\">{}</ul>\
-                         <script type=\"text/lua\" src=\"/assets/utils.lua\"></script>\
-                         <script type=\"text/lua\" src=\"/assets/app.lua\"></script>\
-                     </div>\
-                 </body>",
-        super::util::escape_html(q),
-        items
-    );
+        "<head><meta charset=\"utf-8\"/>
+  <font name=\"playfair\" src=\"https://fonts.gstatic.com/l/font?kit=nuFiD-vYSZviVYUb_rj3ij__anPXPT7KnEkQ2Fo0XcXumgW2Kb6JkDjEdDrmYdycAeI\" /><title>Results - {sq}</title></head>
+                
+<body style=\"bg-[#1a1a1a] text-[#d9d9d9] font-sans\">
+  <div style=\"max-w-[1600px] mx-auto p-8 flex flex-col items-center justify-center gap-16 h-full\">
+    <h1 style=\"text-4xl font-bold font-playfair\">google.co</h1>
+    <form id=\"qform\" style=\"flex items-center gap-2\">
+      <input id=\"q\" name=\"q\" type=\"text\" placeholder=\"Search...\" autofocus autocomplete=\"off\" style=\"w-30 flex-1 min-w-0 p-3 bg-[#303030] text-[#e6e6f0] rounded border border-[#353535]\" />
+      <button type=\"submit\" style=\"bg-[#a0a0a0] text-[#1a1a1a] rounded px-5 py-3\">Search</button>
+    </form>
+    <ul id=\"results\" style=\"mt-4 flex flex-col gap-2 items-stretch w-full list-none m-0 p-0\">{items}</ul>
+    <div style=\"inline-flex gap-4 text-xs text-[#808080] mt-40\">
+      <a href=\"/domains\" style=\"hover:text-[#6366f1] text-xs text-[#808080]\">Submit a domain</a>
+      <span style=\"text-xs text-[#808080]\">•</span>
+      <a href=\"/domains\" style=\"hover:text-[#6366f1] text-xs text-[#808080]\">ToS</a>
+      <span style=\"text-xs text-[#808080]\">•</span>
+      <a href=\"/domains\" style=\"hover:text-[#6366f1] text-xs text-[#808080]\">Help</a>
+      <span style=\"text-xs text-[#808080]\">•</span>
+      <a href=\"/domains\" style=\"hover:text-[#6366f1] text-xs text-[#808080]\">Docs</a>
+      <span style=\"text-xs text-[#808080]\">•</span>
+      <a href=\"/domains\" style=\"hover:text-[#6366f1] text-xs text-[#808080]\">Stats</a>
+      <span style=\"text-xs text-[#808080]\">•</span>
+      <a href=\"/domains\" style=\"hover:text-[#6366f1] text-xs text-[#808080]\">Platform Status</a>
+    </div>
+  </div>
+  <script type=\"text/lua\" src=\"/assets/utils.lua\"></script>
+  <script type=\"text/lua\" src=\"/assets/app.lua\"></script>
+</body>");
     Ok(html_response(StatusCode::Ok, body.into_bytes()))
 }
 

@@ -5,19 +5,27 @@
   <title>Gurted Search - Results</title>
   <font name="playfair" src="https://fonts.gstatic.com/l/font?kit=nuFiD-vYSZviVYUb_rj3ij__anPXPT7KnEkQ2Fo0XcXumgW2Kb6JkDjEdDrmYdycAeI" />
 </head>
-<body style="bg-[#0b0f19] text-[#e6e6f0] font-sans">
-  <div style="max-w-[900px] mx-auto p-6 flex flex-col gap-4">
-    <h1 style="text-3xl text-[#6366f1] font-bold">Results</h1>
-    <div style="flex gap-3 text-sm text-[#9ca3af]">
-      <a href="/" style="text-[#e6e6f0] hover:text-[#6366f1]">Back to home</a>
-      <span>|</span>
-      <a href="/domains" style="text-[#e6e6f0] hover:text-[#6366f1]">Submit a domain</a>
-    </div>
+<body style="bg-[#1a1a1a] text-[#d9d9d9] font-sans">
+  <div style="max-w-[1600px] mx-auto p-8 flex flex-col items-center justify-center gap-16 h-full">
+    <h1 style="text-4xl font-bold font-playfair">google.co</h1>
     <form id="qform" style="flex items-center gap-2">
-      <input id="q" name="q" type="text" placeholder="Search..." autofocus autocomplete="off" style="flex-1 min-w-0 p-2 bg-[#0f1526] text-[#e6e6f0] rounded border border-[#202637] focus:ring-2 ring-[#4f46e5]" />
-      <button type="submit" style="bg-[#6366f1] text-white rounded px-4 py-2 hover:bg-[#4f46e5] active:bg-[#4338ca]">Search</button>
+      <input id="q" name="q" type="text" placeholder="Search..." autofocus autocomplete="off" style="w-30 flex-1 min-w-0 p-3 bg-[#303030] text-[#e6e6f0] rounded border border-[#353535]" />
+      <button type="submit" style="bg-[#a0a0a0] text-[#1a1a1a] rounded px-5 py-3">Search</button>
     </form>
-  <ul id="results" style="mt-4 flex flex-col gap-2 items-stretch w-full list-none m-0 p-0"></ul>
+    <ul id="results" style="mt-4 flex flex-col gap-2 items-stretch w-full list-none m-0 p-0"></ul>
+    <div style="inline-flex gap-4 text-xs text-[#808080] mt-40">
+      <a href="/domains" style="hover:text-[#6366f1] text-xs text-[#808080]">Submit a domain</a>
+      <span style="text-xs text-[#808080]">•</span>
+      <a href="/domains" style="hover:text-[#6366f1] text-xs text-[#808080]">ToS</a>
+      <span style="text-xs text-[#808080]">•</span>
+      <a href="/domains" style="hover:text-[#6366f1] text-xs text-[#808080]">Help</a>
+      <span style="text-xs text-[#808080]">•</span>
+      <a href="/domains" style="hover:text-[#6366f1] text-xs text-[#808080]">Docs</a>
+      <span style="text-xs text-[#808080]">•</span>
+      <a href="/domains" style="hover:text-[#6366f1] text-xs text-[#808080]">Stats</a>
+      <span style="text-xs text-[#808080]">•</span>
+      <a href="/domains" style="hover:text-[#6366f1] text-xs text-[#808080]">Platform Status</a>
+    </div>
   </div>
   <script type="text/lua" src="/assets/utils.lua"></script>
   <script type="text/lua" src="/assets/app.lua"></script>
