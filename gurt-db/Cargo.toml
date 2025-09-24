@@ -1,0 +1,14 @@
+[package]
+name = "gurt-db"
+version = "0.1.0"
+edition = "2021"
+description = "Shared PostgreSQL infrastructure: config, pooling, retry, and migrations for Gurt."
+license = "MIT"
+publish = false
+
+[dependencies]
+sqlx = { version = "0.7", features = ["runtime-tokio", "tls-rustls", "postgres", "macros", "migrate"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+thiserror = "1"
+tracing = "0.1"
+fastrand = "2"
