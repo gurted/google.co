@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json",
+  "workspace.library": [
+    "./typings"
+  ],
+  "runtime.version": "Lua 5.4",
+  "diagnostics.globals": [
+    "gurt",
+    "document",
+    "window",
+    "network",
+    "JSON",
+    "trace",
+    "fetch",
+    "encodeURIComponent",
+    "decodeURIComponent",
+    "getPathname",
+    "Time",
+    "setTimeout",
+    "setInterval",
+    "clearTimeout",
+    "clearInterval",
+    "Clipboard",
+    "WebSocket",
+    "Regex",
+    "urlEncode",
+    "urlDecode",
+    "onNextFrame"
+  ]
+}

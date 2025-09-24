@@ -5,3 +5,4 @@ docs/
 gurt-server.*
 test.sh
 .env
+data/
