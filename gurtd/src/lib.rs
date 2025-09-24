@@ -10,3 +10,6 @@ pub mod crawler;
 pub mod index;
 pub mod link;
 pub mod search;
+
+pub mod storage;
+pub mod startup;

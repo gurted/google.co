@@ -37,6 +37,13 @@ async fn main() -> Result<()> {
     services::init(pool);
     eprintln!("[db] pool ready");
 
+    // bootstrap resume from DB async (non-blocking)
+    tokio::spawn(async {
+        if let Err(e) = gurtd::startup::bootstrap_resume().await {
+            eprintln!("[bootstrap] error: {:?}", e);
+        }
+    });
+
     eprintln!("[tls] loading server certificate and key\n  cert: {cert_path}\n  key:  {key_path}");
     let tls = match tls::TlsConfig::load(&cert_path, &key_path) {
         Ok(t) => t,

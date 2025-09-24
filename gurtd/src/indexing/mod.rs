@@ -127,6 +127,16 @@ async fn process_domain(domain: &str) -> Result<()> {
             );
         }
     }
+
+    // mark domain as ready in DB (best-effort, non-blocking)
+    {
+        let pool = services::db().clone();
+        let d = domain.to_string();
+        tokio::spawn(async move {
+            let _ = crate::storage::domains::set_domain_status(&pool, &d, "ready").await;
+        });
+    }
+
     Ok(())
 }
 

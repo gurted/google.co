@@ -24,11 +24,13 @@ gurt-db = { path = "../gurt-db" }
 gurt-web = { path = "../gurt-web", optional = true }
 gurt-macros = { path = "../gurt-macros", optional = true }
 dotenv = "0.15.0"
+sqlx = { version = "0.7", features = ["runtime-tokio", "tls-rustls", "postgres"] }
 
 [features]
 default = []
 # ext-web enables attribute-style routing registry (phase 2, default off)
 ext-web = ["dep:gurt-web", "dep:gurt-macros"]
+tls_client = []
 
 [dev-dependencies]
 once_cell = "1"

@@ -1,6 +1,5 @@
 use anyhow::Result;
 use once_cell::sync::Lazy;
-use std::collections::{HashSet, VecDeque};
 use std::net::{IpAddr, SocketAddr};
 use std::str::FromStr;
 
@@ -175,6 +174,15 @@ pub fn handle_add_site(req: Request, peer: Option<SocketAddr>) -> Result<Respons
     {
         let mut set = SUBMITTED_SITES.lock().unwrap();
         set.insert(domain.clone());
+    }
+
+    // persist submission asynchronously to DB (fire-and-forget to keep latency low)
+    {
+        let pool = crate::services::db().clone();
+        let d = domain.clone();
+        tokio::spawn(async move {
+            let _ = crate::storage::domains::upsert_domain_submission(&pool, &d, Some("api")).await;
+        });
     }
 
     indexing::enqueue_domain(domain.clone());
