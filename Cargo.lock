@@ -772,6 +772,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "gurt-api",
+ "gurt-db",
  "gurt-index",
  "gurt-macros",
  "gurt-query",

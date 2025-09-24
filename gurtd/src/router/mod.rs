@@ -4,9 +4,9 @@ use std::net::SocketAddr;
 use crate::proto::http_like::{Request, Response};
 use gurt_api::status::StatusCode;
 
-mod ui;
 mod api;
 mod search_utils;
+mod ui;
 mod util;
 
 pub fn handle(req: Request) -> Result<Response> {

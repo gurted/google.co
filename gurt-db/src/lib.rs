@@ -6,7 +6,21 @@ use tracing::{debug, info, warn};
 
 pub use sqlx::PgPool;
 
-static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
+pub mod tables {
+    pub const DOMAINS: &str = "domains";
+    pub const URLS: &str = "urls";
+    pub const CRAWL_QUEUE: &str = "crawl_queue";
+    pub const RECRAWL_QUEUE: &str = "recrawl_queue";
+    pub const ROBOTS_CACHE: &str = "robots_cache";
+    pub const FETCH_HISTORY: &str = "fetch_history";
+    pub const LINK_EDGES: &str = "link_edges";
+    pub const LINK_AUTHORITY: &str = "link_authority";
+    pub const INDEX_SEGMENTS: &str = "index_segments";
+    pub const QUERY_CACHE: &str = "query_cache";
+    pub const RATE_LIMIT: &str = "rate_limit";
+}
+
+pub static MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
 
 #[derive(Clone, Debug)]
 pub struct DbConfig {
@@ -82,8 +96,7 @@ impl DbConfig {
         cfg.acquire_timeout_secs =
             parse_env_u64("DB_ACQUIRE_TIMEOUT_SECS", cfg.acquire_timeout_secs);
 
-        cfg.retry_max_attempts =
-            parse_env_u32("DB_RETRY_MAX_ATTEMPTS", cfg.retry_max_attempts);
+        cfg.retry_max_attempts = parse_env_u32("DB_RETRY_MAX_ATTEMPTS", cfg.retry_max_attempts);
 
         cfg.retry_base_backoff_ms =
             parse_env_u64("DB_RETRY_BASE_BACKOFF_MS", cfg.retry_base_backoff_ms);
@@ -145,9 +158,10 @@ impl Db {
     /// If migrations are enabled, they run after the first successful connect.
     pub async fn get_pool(&self) -> Result<&PgPool, DbInitError> {
         // Fallible initialization of the OnceCell (connect with retry).
-        let pool = self.pool.get_or_try_init(|| async {
-            self.try_connect_with_retry().await
-        }).await?;
+        let pool = self
+            .pool
+            .get_or_try_init(|| async { self.try_connect_with_retry().await })
+            .await?;
 
         // Run migrations once after first connect if enabled.
         if self.cfg.migrate_on_start {
@@ -166,7 +180,12 @@ impl Db {
             return HealthStatus::NotInitialized;
         };
 
-        match tokio::time::timeout(Duration::from_secs(1), sqlx::query("SELECT 1").execute(pool)).await {
+        match tokio::time::timeout(
+            Duration::from_secs(1),
+            sqlx::query("SELECT 1").execute(pool),
+        )
+        .await
+        {
             Ok(Ok(_)) => HealthStatus::Ok,
             Ok(Err(e)) => HealthStatus::Error(e.to_string()),
             Err(_) => HealthStatus::Error("health check timed out".to_string()),
@@ -219,7 +238,10 @@ impl Db {
 
             match result {
                 Ok(pool) => {
-                    debug!(target = "gurt_db", "connected to database on attempt {}", attempt);
+                    debug!(
+                        target = "gurt_db",
+                        "connected to database on attempt {}", attempt
+                    );
                     return Ok(pool);
                 }
                 Err(msg) => {
@@ -228,7 +250,14 @@ impl Db {
                         break;
                     }
                     let delay = compute_backoff_ms(self.cfg.retry_base_backoff_ms, attempt);
-                    warn!(target = "gurt_db", "db connect attempt {}/{} failed: {} ; retrying in {} ms", attempt, max, msg, delay);
+                    warn!(
+                        target = "gurt_db",
+                        "db connect attempt {}/{} failed: {} ; retrying in {} ms",
+                        attempt,
+                        max,
+                        msg,
+                        delay
+                    );
                     tokio::time::sleep(Duration::from_millis(delay)).await;
                 }
             }

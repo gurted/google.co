@@ -1,6 +1,7 @@
-use gurtd::{proto, router, tls};
+use gurtd::{proto, router, services, tls};
 
-use anyhow::Result;
+use anyhow::{Context, Result};
+use gurt_db::{Db, DbConfig};
 use rustls::ProtocolVersion;
 use std::net::SocketAddr;
 use tokio::{io::AsyncWriteExt, net::TcpListener};
@@ -12,6 +13,27 @@ async fn main() -> Result<()> {
     let cert_path = std::env::var("GURT_CERT").unwrap_or_else(|_| "gurt-server.crt".to_string());
     let key_path = std::env::var("GURT_KEY").unwrap_or_else(|_| "gurt-server.key".to_string());
     let addr = std::env::var("GURT_ADDR").unwrap_or_else(|_| "127.0.0.1:4878".to_string());
+
+    let pool = {
+        let db_cfg = DbConfig::from_env();
+        eprintln!(
+            "[db] configuration loaded\n  url: {}",
+            db_cfg
+                .database_url
+                .as_deref()
+                .map(|_| "<set>")
+                .unwrap_or("<missing>")
+        );
+        let db = Db::new(db_cfg);
+        eprintln!("[db] initializing connection pool");
+        db.init().await.with_context(|| "database init failed")?;
+        db.get_pool()
+            .await
+            .with_context(|| "database pool acquisition failed")?
+            .clone()
+    };
+    services::init(pool);
+    eprintln!("[db] pool ready");
 
     eprintln!("[tls] loading server certificate and key\n  cert: {cert_path}\n  key:  {key_path}");
     let tls = match tls::TlsConfig::load(&cert_path, &key_path) {

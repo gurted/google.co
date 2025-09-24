@@ -12,8 +12,8 @@ use crate::proto::http_like::{Request, Response};
 use crate::query::parse_query;
 use crate::search::{normalize_key, HotQueryCache};
 
-use super::util::{json_response, percent_decode};
 use super::search_utils::rescore_and_convert;
+use super::util::{json_response, percent_decode};
 
 static HOT_CACHE: Lazy<HotQueryCache> =
     Lazy::new(|| HotQueryCache::new(std::time::Duration::from_secs(20)));
@@ -39,14 +39,22 @@ pub fn handle_search(req: Request) -> Result<Response> {
         });
     }
     // Overload and internal error mapping (stubbed via env flags for now)
-    if std::env::var("GURT_OVERLOADED").ok().filter(|v| v != "0").is_some() {
+    if std::env::var("GURT_OVERLOADED")
+        .ok()
+        .filter(|v| v != "0")
+        .is_some()
+    {
         return Ok(Response {
             code: StatusCode::TooManyRequests,
             headers: vec![],
             body: vec![],
         });
     }
-    if std::env::var("GURT_FORCE_500").ok().filter(|v| v != "0").is_some() {
+    if std::env::var("GURT_FORCE_500")
+        .ok()
+        .filter(|v| v != "0")
+        .is_some()
+    {
         return Ok(Response {
             code: StatusCode::InternalServerError,
             headers: vec![],
@@ -97,22 +105,43 @@ struct IpRateLimiter {
 
 impl IpRateLimiter {
     fn new(max: usize, window: std::time::Duration) -> Self {
-        Self { max, window, map: std::sync::Mutex::new(std::collections::HashMap::new()) }
+        Self {
+            max,
+            window,
+            map: std::sync::Mutex::new(std::collections::HashMap::new()),
+        }
     }
     fn allow(&self, ip: IpAddr) -> bool {
         let now = std::time::Instant::now();
         let mut map = self.map.lock().unwrap();
-        let q = map.entry(ip).or_insert_with(|| std::collections::VecDeque::new());
+        let q = map
+            .entry(ip)
+            .or_insert_with(|| std::collections::VecDeque::new());
         while let Some(&t) = q.front() {
-            if now.duration_since(t) > self.window { q.pop_front(); } else { break; }
+            if now.duration_since(t) > self.window {
+                q.pop_front();
+            } else {
+                break;
+            }
         }
-        if q.len() < self.max { q.push_back(now); true } else { false }
+        if q.len() < self.max {
+            q.push_back(now);
+            true
+        } else {
+            false
+        }
     }
 }
 
 static RATE_LIMITER: Lazy<IpRateLimiter> = Lazy::new(|| {
-    let max = std::env::var("GURT_SUBMIT_RATE").ok().and_then(|s| s.parse::<usize>().ok()).unwrap_or(5);
-    let win = std::env::var("GURT_SUBMIT_WINDOW").ok().and_then(|s| s.parse::<u64>().ok()).unwrap_or(60);
+    let max = std::env::var("GURT_SUBMIT_RATE")
+        .ok()
+        .and_then(|s| s.parse::<usize>().ok())
+        .unwrap_or(5);
+    let win = std::env::var("GURT_SUBMIT_WINDOW")
+        .ok()
+        .and_then(|s| s.parse::<u64>().ok())
+        .unwrap_or(60);
     IpRateLimiter::new(max, std::time::Duration::from_secs(win))
 });
 
@@ -125,14 +154,22 @@ pub fn handle_add_site(req: Request, peer: Option<SocketAddr>) -> Result<Respons
     let ip = ip_from_peer.or(ip_from_header);
     if let Some(ip) = ip {
         if !RATE_LIMITER.allow(ip) {
-            return Ok(Response { code: StatusCode::TooManyRequests, headers: vec![], body: vec![] });
+            return Ok(Response {
+                code: StatusCode::TooManyRequests,
+                headers: vec![],
+                body: vec![],
+            });
         }
     }
 
     // Parse and validate body
     let domain = extract_domain_from_body(&req.body).unwrap_or_default();
     if domain.is_empty() {
-        return Ok(Response { code: StatusCode::BadRequest, headers: vec![], body: vec![] });
+        return Ok(Response {
+            code: StatusCode::BadRequest,
+            headers: vec![],
+            body: vec![],
+        });
     }
 
     {
@@ -164,11 +201,16 @@ fn extract_domain_from_body(body: &[u8]) -> Option<String> {
         String::new()
     };
     domain = domain.trim().to_lowercase();
-    if !is_valid_domain(&domain) { return None; }
+    if !is_valid_domain(&domain) {
+        return None;
+    }
     Some(domain)
 }
 
 fn is_valid_domain(s: &str) -> bool {
-    if s.is_empty() || s.len() > 255 { return false; }
-    s.chars().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '.')
+    if s.is_empty() || s.len() > 255 {
+        return false;
+    }
+    s.chars()
+        .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '.')
 }

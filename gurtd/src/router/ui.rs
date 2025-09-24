@@ -22,7 +22,11 @@ pub fn ui_dir() -> std::path::PathBuf {
     }
     for p in &candidates {
         if p.is_dir() {
-            if std::env::var("GURT_DEBUG_UI").ok().filter(|v| v != "0").is_some() {
+            if std::env::var("GURT_DEBUG_UI")
+                .ok()
+                .filter(|v| v != "0")
+                .is_some()
+            {
                 eprintln!("[ui] using directory: {}", p.display());
             }
             return p.clone();
@@ -37,7 +41,11 @@ pub fn serve_index_html() -> anyhow::Result<Response> {
     match std::fs::read(&p) {
         Ok(bytes) => Ok(html_response(StatusCode::Ok, bytes)),
         Err(e) => {
-            if std::env::var("GURT_DEBUG_UI").ok().filter(|v| v != "0").is_some() {
+            if std::env::var("GURT_DEBUG_UI")
+                .ok()
+                .filter(|v| v != "0")
+                .is_some()
+            {
                 eprintln!("[ui] index fallback; failed to read {}: {}", p.display(), e);
             }
             Ok(html_response(
@@ -54,8 +62,16 @@ pub fn serve_search_html() -> anyhow::Result<Response> {
     match std::fs::read(&p) {
         Ok(bytes) => Ok(html_response(StatusCode::Ok, bytes)),
         Err(e) => {
-            if std::env::var("GURT_DEBUG_UI").ok().filter(|v| v != "0").is_some() {
-                eprintln!("[ui] search fallback; failed to read {}: {}", p.display(), e);
+            if std::env::var("GURT_DEBUG_UI")
+                .ok()
+                .filter(|v| v != "0")
+                .is_some()
+            {
+                eprintln!(
+                    "[ui] search fallback; failed to read {}: {}",
+                    p.display(),
+                    e
+                );
             }
             Ok(html_response(
                 StatusCode::Ok,
@@ -71,8 +87,16 @@ pub fn serve_domains_html() -> anyhow::Result<Response> {
     match std::fs::read(&p) {
         Ok(bytes) => Ok(html_response(StatusCode::Ok, bytes)),
         Err(e) => {
-            if std::env::var("GURT_DEBUG_UI").ok().filter(|v| v != "0").is_some() {
-                eprintln!("[ui] domains fallback; failed to read {}: {}", p.display(), e);
+            if std::env::var("GURT_DEBUG_UI")
+                .ok()
+                .filter(|v| v != "0")
+                .is_some()
+            {
+                eprintln!(
+                    "[ui] domains fallback; failed to read {}: {}",
+                    p.display(),
+                    e
+                );
             }
             Ok(html_response(
                 StatusCode::Ok,
@@ -101,7 +125,11 @@ pub fn serve_asset(path: &str) -> anyhow::Result<Response> {
             body: bytes,
         }),
         Err(e) => {
-            if std::env::var("GURT_DEBUG_UI").ok().filter(|v| v != "0").is_some() {
+            if std::env::var("GURT_DEBUG_UI")
+                .ok()
+                .filter(|v| v != "0")
+                .is_some()
+            {
                 eprintln!("[ui] asset missing; failed to read {}: {}", p.display(), e);
             }
             Ok(Response {
@@ -151,7 +179,11 @@ pub fn render_search_ssr(q: &str) -> anyhow::Result<Response> {
 
     let mut items = String::new();
     for r in &results {
-        let title = if r.title.trim().is_empty() { r.url.clone() } else { r.title.clone() };
+        let title = if r.title.trim().is_empty() {
+            r.url.clone()
+        } else {
+            r.title.clone()
+        };
         let url = escape_html(&r.url);
         let etitle = escape_html(&title);
         items.push_str(&format!(

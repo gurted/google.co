@@ -18,7 +18,9 @@ const RENDER_BUDGET: std::time::Duration = std::time::Duration::from_millis(120)
 
 /// Public entry point used by the router when a new domain submission arrives.
 pub fn enqueue_domain(domain: String) {
-    if domain.is_empty() { return; }
+    if domain.is_empty() {
+        return;
+    }
     INDEXING_SERVICE.enqueue(domain);
 }
 
@@ -32,17 +34,27 @@ struct IndexingService {
 
 impl IndexingService {
     fn new() -> Self {
-        Self { sender: Mutex::new(None), in_flight: Arc::new(Mutex::new(HashSet::new())) }
+        Self {
+            sender: Mutex::new(None),
+            in_flight: Arc::new(Mutex::new(HashSet::new())),
+        }
     }
 
     fn enqueue(&self, domain: String) {
         {
             let mut guard = self.in_flight.lock().unwrap();
-            if guard.contains(&domain) { return; }
+            if guard.contains(&domain) {
+                return;
+            }
             guard.insert(domain.clone());
         }
         let sender = self.ensure_worker();
-        if sender.send(IndexJob { domain: domain.clone() }).is_err() {
+        if sender
+            .send(IndexJob {
+                domain: domain.clone(),
+            })
+            .is_err()
+        {
             let mut guard = self.in_flight.lock().unwrap();
             guard.remove(&domain);
         }
@@ -50,13 +62,18 @@ impl IndexingService {
 
     fn ensure_worker(&self) -> UnboundedSender<IndexJob> {
         let mut guard = self.sender.lock().unwrap();
-        if let Some(tx) = guard.as_ref() { return tx.clone(); }
+        if let Some(tx) = guard.as_ref() {
+            return tx.clone();
+        }
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
         let in_flight = self.in_flight.clone();
         std::thread::Builder::new()
             .name("gurt-indexer".into())
             .spawn(move || {
-                let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().expect("indexing runtime");
+                let runtime = tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                    .expect("indexing runtime");
                 runtime.block_on(run_worker(rx, in_flight));
             })
             .expect("spawn indexing worker");
@@ -65,7 +82,9 @@ impl IndexingService {
     }
 }
 
-struct IndexJob { domain: String }
+struct IndexJob {
+    domain: String,
+}
 
 async fn run_worker(mut rx: UnboundedReceiver<IndexJob>, in_flight: Arc<Mutex<HashSet<String>>>) {
     while let Some(job) = rx.recv().await {
@@ -80,18 +99,33 @@ async fn run_worker(mut rx: UnboundedReceiver<IndexJob>, in_flight: Arc<Mutex<Ha
 async fn process_domain(domain: &str) -> Result<()> {
     eprintln!("[indexing] enqueue domain={}", domain);
     let urls = collect_candidate_urls(domain).await;
-    if urls.is_empty() { return Err(anyhow!("no crawl candidates")); }
+    if urls.is_empty() {
+        return Err(anyhow!("no crawl candidates"));
+    }
 
-    for url in urls { if let Err(err) = fetch::index_single_url(&url, &RECRAWL_QUEUE).await { eprintln!("[indexing] url={} error={:?}", url, err); } }
+    for url in urls {
+        if let Err(err) = fetch::index_single_url(&url, &RECRAWL_QUEUE).await {
+            eprintln!("[indexing] url={} error={:?}", url, err);
+        }
+    }
 
     let engine = services::index_engine();
-    if let Err(err) = engine.commit() { eprintln!("[indexing] commit error: {err:?}"); }
-    if let Err(err) = engine.refresh() { eprintln!("[indexing] refresh error: {err:?}"); }
+    if let Err(err) = engine.commit() {
+        eprintln!("[indexing] commit error: {err:?}");
+    }
+    if let Err(err) = engine.refresh() {
+        eprintln!("[indexing] refresh error: {err:?}");
+    }
 
     let queued = RECRAWL_QUEUE.len().await;
     if queued > 0 {
         let drained = RECRAWL_QUEUE.drain().await;
-        for item in drained { eprintln!("[indexing] dynamic requeue url={} reason={:?}", item.url, item.reason); }
+        for item in drained {
+            eprintln!(
+                "[indexing] dynamic requeue url={} reason={:?}",
+                item.url, item.reason
+            );
+        }
     }
     Ok(())
 }
@@ -104,8 +138,12 @@ async fn collect_candidate_urls(domain: &str) -> Vec<String> {
             if let Ok(xml) = String::from_utf8(resp.body.clone()) {
                 let entries = parse_sitemap_xml(&xml);
                 for entry in entries {
-                    if urls.len() >= MAX_PAGES_PER_DOMAIN { break; }
-                    if let Some(normalized) = normalize_candidate_url(domain, entry) { urls.push(normalized); }
+                    if urls.len() >= MAX_PAGES_PER_DOMAIN {
+                        break;
+                    }
+                    if let Some(normalized) = normalize_candidate_url(domain, entry) {
+                        urls.push(normalized);
+                    }
                 }
             }
         }
@@ -118,8 +156,14 @@ async fn collect_candidate_urls(domain: &str) -> Vec<String> {
 
 fn normalize_candidate_url(domain: &str, raw: String) -> Option<String> {
     let trimmed = raw.trim();
-    if trimmed.is_empty() { return None; }
-    if trimmed.starts_with("gurt://") { return Some(trimmed.to_string()); }
-    if trimmed.starts_with('/') { return Some(format!("gurt://{}{}", domain, trimmed)); }
+    if trimmed.is_empty() {
+        return None;
+    }
+    if trimmed.starts_with("gurt://") {
+        return Some(trimmed.to_string());
+    }
+    if trimmed.starts_with('/') {
+        return Some(format!("gurt://{}{}", domain, trimmed));
+    }
     Some(format!("gurt://{}/{trimmed}", domain))
 }

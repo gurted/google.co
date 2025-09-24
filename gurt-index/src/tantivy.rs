@@ -189,9 +189,9 @@ impl IndexEngine for TantivyIndexEngine {
         fn first_str(v: &serde_json::Value) -> Option<String> {
             match v {
                 serde_json::Value::String(s) => Some(s.clone()),
-                serde_json::Value::Array(arr) => arr
-                    .iter()
-                    .find_map(|x| x.as_str().map(|s| s.to_string())),
+                serde_json::Value::Array(arr) => {
+                    arr.iter().find_map(|x| x.as_str().map(|s| s.to_string()))
+                }
                 serde_json::Value::Object(map) => {
                     // Sometimes Tantivy representations can be object-y; try common keys
                     for key in ["value", "text", "raw"] {
