@@ -5,9 +5,11 @@ use gurt_db::{Db, DbConfig};
 use rustls::ProtocolVersion;
 use std::net::SocketAddr;
 use tokio::{io::AsyncWriteExt, net::TcpListener};
+use dotenv::dotenv;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenv().ok();
     // Config via env (avoid extra deps):
     // GURT_CERT, GURT_KEY, GURT_ADDR (default 127.0.0.1:4878)
     let cert_path = std::env::var("GURT_CERT").unwrap_or_else(|_| "gurt-server.crt".to_string());

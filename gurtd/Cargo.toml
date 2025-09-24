@@ -23,6 +23,7 @@ gurt-index = { path = "../gurt-index" }
 gurt-db = { path = "../gurt-db" }
 gurt-web = { path = "../gurt-web", optional = true }
 gurt-macros = { path = "../gurt-macros", optional = true }
+dotenv = "0.15.0"
 
 [features]
 default = []
