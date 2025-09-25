@@ -9,8 +9,8 @@
   <div style="max-w-[1600px] mx-auto p-8 flex flex-col items-center justify-center gap-16 h-full">
     <h1 style="text-4xl font-bold font-playfair">google.co</h1>
     <form id="qform" style="flex items-center gap-2">
-      <input id="q" name="q" type="text" placeholder="Search..." autofocus autocomplete="off" style="w-30 flex-1 min-w-0 p-3 bg-[#303030] text-[#e6e6f0] rounded border border-[#353535]" />
-      <button type="submit" style="bg-[#a0a0a0] text-[#1a1a1a] rounded px-5 py-3">Search</button>
+      <input id="value" name="q" type="text" placeholder="Search..." autofocus autocomplete="off" style="w-30 flex-1 min-w-0 p-3 bg-[#303030] text-[#e6e6f0] rounded border border-[#353535]" />
+      <button type="submit" id="submit" style="bg-[#a0a0a0] text-[#1a1a1a] rounded px-5 py-3">Search</button>
     </form>
     <ul id="results" style="mt-4 flex flex-col gap-2 items-stretch w-full list-none m-0 p-0"></ul>
     <div style="inline-flex gap-4 text-xs text-[#808080] mt-40">
@@ -28,6 +28,6 @@
     </div>
   </div>
   <script type="text/lua" src="/assets/utils.lua"></script>
-  <script type="text/lua" src="/assets/app.lua"></script>
+  <script type="text/lua" src="/assets/search.lua"></script>
 </body>
 </html>

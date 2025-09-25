@@ -187,9 +187,9 @@ pub fn render_search_ssr(q: &str) -> anyhow::Result<Response> {
         let url = escape_html(&r.url);
         let etitle = escape_html(&title);
         items.push_str(&format!(
-            "<li style=\"w-full p-3 flex flex-col\">\
-                <a href=\"{url}\" style=\"text-[#d9d9d9] hover:text-[#6366f1] font-bold\">{etitle}</a>\
-                <div style=\"text-sm text-[#808080] mt-1\">{url}</div>\
+            "<li style=\"w-full rounded border border-[#202637] bg-[#0f1526] hover:bg-[#111a2e] p-3 flex flex-col\">
+                <a href=\"{url}\" style=\"text-[#e6e6f0] hover:text-[#6366f1] font-bold\">{etitle}</a>
+                <p style=\"text-sm text-[#808080] mt-1\">{url}</p>
             </li>"
         ));
     }
@@ -203,8 +203,8 @@ pub fn render_search_ssr(q: &str) -> anyhow::Result<Response> {
   <div style=\"max-w-[1600px] mx-auto p-8 flex flex-col items-center justify-center gap-16 h-full\">
     <h1 style=\"text-4xl font-bold font-playfair\">google.co</h1>
     <form id=\"qform\" style=\"flex items-center gap-2\">
-      <input id=\"q\" name=\"q\" type=\"text\" placeholder=\"Search...\" autofocus autocomplete=\"off\" style=\"w-30 flex-1 min-w-0 p-3 bg-[#303030] text-[#e6e6f0] rounded border border-[#353535]\" />
-      <button type=\"submit\" style=\"bg-[#a0a0a0] text-[#1a1a1a] rounded px-5 py-3\">Search</button>
+      <input id=\"value\" name=\"q\" type=\"text\" placeholder=\"Search...\" autofocus autocomplete=\"off\" style=\"w-30 flex-1 min-w-0 p-3 bg-[#303030] text-[#e6e6f0] rounded border border-[#353535]\" />
+      <button type=\"submit\" id=\"submit\" style=\"bg-[#a0a0a0] text-[#1a1a1a] rounded px-5 py-3\">Search</button>
     </form>
     <ul id=\"results\" style=\"mt-4 flex flex-col gap-2 items-stretch w-full list-none m-0 p-0\">{items}</ul>
     <div style=\"inline-flex gap-4 text-xs text-[#808080] mt-40\">
