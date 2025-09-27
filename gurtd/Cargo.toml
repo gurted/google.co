@@ -25,6 +25,7 @@ gurt-web = { path = "../gurt-web", optional = true }
 gurt-macros = { path = "../gurt-macros", optional = true }
 dotenv = "0.15.0"
 sqlx = { version = "0.7", features = ["runtime-tokio", "tls-rustls", "postgres"] }
+tracing = "0.1"
 
 [features]
 default = []

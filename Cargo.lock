@@ -795,6 +795,7 @@ dependencies = [
  "sqlx",
  "tokio",
  "tokio-rustls",
+ "tracing",
  "url",
  "webpki",
 ]

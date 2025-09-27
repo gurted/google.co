@@ -2,6 +2,8 @@ use once_cell::sync::Lazy;
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tracing;
+use tokio::time;
 
 use anyhow::{anyhow, Result};
 
@@ -128,13 +130,25 @@ async fn process_domain(domain: &str) -> Result<()> {
         }
     }
 
-    // mark domain as ready in DB (best-effort, non-blocking)
-    {
-        let pool = services::db().clone();
-        let d = domain.to_string();
-        tokio::spawn(async move {
-            let _ = crate::storage::domains::set_domain_status(&pool, &d, "ready").await;
-        });
+    // mark domain as ready in DB reliably with retries
+    let pool = services::db().clone();
+    let mut attempts = 0;
+    const MAX_ATTEMPTS: usize = 3;
+    let mut backoff = std::time::Duration::from_millis(100);
+    loop {
+        attempts += 1;
+        match crate::storage::domains::set_domain_status(&pool, domain, "ready").await {
+            Ok(_) => break,
+            Err(err) => {
+                if attempts >= MAX_ATTEMPTS {
+                    tracing::error!("[indexing] failed to set domain={} to ready after {} attempts: {:?}", domain, attempts, err);
+                    break;
+                }
+                tracing::warn!("[indexing] retrying set_domain_status for domain={} (attempt {}/{}) due to: {:?}", domain, attempts, MAX_ATTEMPTS, err);
+                tokio::time::sleep(backoff).await;
+                backoff = backoff * 2;
+            }
+        }
     }
 
     Ok(())
