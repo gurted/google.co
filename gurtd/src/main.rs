@@ -4,7 +4,7 @@ use anyhow::{Context, Result};
 use gurt_db::{Db, DbConfig};
 use rustls::ProtocolVersion;
 use std::net::SocketAddr;
-use tokio::{io::AsyncWriteExt, net::TcpListener};
+use tokio::{io::AsyncWriteExt, net::TcpListener, time::{timeout, Duration}};
 use dotenv::dotenv;
 
 #[tokio::main]
@@ -117,18 +117,36 @@ async fn handle_conn(
         return Ok(());
     }
 
-    // Stage 3: process a single request (keep-alive/out of scope for now)
-    let req = match proto::http_like::read_request(&mut tls_stream).await {
-        Ok(r) => r,
-        Err(code) => {
-            let resp = proto::http_like::make_empty_response(code);
-            tls_stream.write_all(resp.as_bytes()).await?;
-            return Ok(());
-        }
-    };
+    // Stage 3: process requests in loop with keep-alive (idle timeout 30s, break on error or Connection: close)
+    loop {
+        let req = match timeout(Duration::from_secs(30), proto::http_like::read_request(&mut tls_stream)).await {
+            Ok(Ok(r)) => r,
+            Ok(Err(code)) => {
+                let resp = proto::http_like::make_empty_response(code);
+                let _ = tls_stream.write_all(resp.as_bytes()).await;
+                break;
+            }
+            Err(_) => {
+                // idle timeout
+                break;
+            }
+        };
 
-    let response = router::handle_with_peer(req, Some(peer))?;
-    let bytes = response.into_bytes();
-    tls_stream.write_all(&bytes).await?;
+        let mut close_connection = false;
+        for (key, value) in &req.headers {
+            if key.as_str().eq_ignore_ascii_case("connection") && value.as_str().eq_ignore_ascii_case("close") {
+                close_connection = true;
+                break;
+            }
+        }
+
+        let response = router::handle_with_peer(req, Some(peer))?;
+        let bytes = response.into_bytes();
+        tls_stream.write_all(&bytes).await?;
+
+        if close_connection {
+            break;
+        }
+    }
     Ok(())
 }
