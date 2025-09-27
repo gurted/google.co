@@ -74,7 +74,7 @@ pub mod domains {
         // Rely on enum domain_status in the schema; Postgres will validate.
         let _ = sqlx::query(
             "UPDATE domains
-                SET status = $2, updated_at = CURRENT_TIMESTAMP
+                SET status = $2::domain_status, updated_at = CURRENT_TIMESTAMP
               WHERE LOWER(name) = LOWER($1)",
         )
         .bind(&name)
